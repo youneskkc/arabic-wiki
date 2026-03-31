@@ -55,6 +55,9 @@ h1 svg{width:24px;height:24px}
 @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 .error-msg{text-align:center;padding:30px 20px;color:var(--orange);font-size:13px}
 .comment-text{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;max-height:36px;overflow:hidden}
+footer{text-align:center;padding:24px;font-size:12px;color:var(--text3);border-top:1px solid var(--border);margin-top:20px;background:var(--surface)}
+footer a{color:var(--text2);text-decoration:none}
+footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -104,6 +107,11 @@ h1 svg{width:24px;height:24px}
     </div>
   </div>
 </div>
+
+<footer>
+  Developed by <a href="https://youdo.blog" target="_blank" rel="noopener">Younes Ben Amara</a> with help of <a href="https://mulerun.com" target="_blank" rel="noopener">Mulerun.com</a>
+</footer>
+
 <script>
 const UA = 'ArabicWikiTracker/1.0 (https://github.com/youneskkc/arabic-wiki)';
 const LIMIT = 25;
@@ -134,22 +142,27 @@ function renderRows(items, panel, badgeClass, badgeLabel, badgeFn) {
   `).join('');
 }
 
-// 1. TOP VIEWED (yesterday - today's data not available until next day)
+// 1. TOP VIEWED (try yesterday, fallback to 2 days ago)
 async function loadViews() {
   const el = document.getElementById('viewsPanel');
   el.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
-  try {
-    const d = new Date(); d.setDate(d.getDate() - 1);
-    const path = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-    const res = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/ar.wikipedia/all-access/${path}`, { headers: { 'Api-User-Agent': UA } });
-    const data = await res.json();
-    const articles = (data.items?.[0]?.articles || []).filter(a => isArticle(a.article)).slice(0, LIMIT);
-    const items = articles.map(a => ({ title: a.article, views: a.views, meta: `${fmtNum(a.views)} مشاهدة` }));
-    renderRows(items, 'viewsPanel', 'badge-views', 'مشاهدة', it => fmtNum(it.views));
-    document.getElementById('dateInfo').textContent = `بيانات ${d.toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
-  } catch(e) {
-    el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
+
+  for (let daysAgo = 1; daysAgo <= 3; daysAgo++) {
+    try {
+      const d = new Date(); d.setDate(d.getDate() - daysAgo);
+      const path = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+      const res = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/ar.wikipedia/all-access/${path}`, { headers: { 'Api-User-Agent': UA } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const articles = (data.items?.[0]?.articles || []).filter(a => isArticle(a.article)).slice(0, LIMIT);
+      if (articles.length === 0) continue;
+      const items = articles.map(a => ({ title: a.article, views: a.views, meta: `${fmtNum(a.views)} مشاهدة` }));
+      renderRows(items, 'viewsPanel', 'badge-views', 'مشاهدة', it => fmtNum(it.views));
+      document.getElementById('dateInfo').textContent = `بيانات ${d.toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+      return;
+    } catch(e) { continue; }
   }
+  el.innerHTML = '<div class="error-msg">لا توجد بيانات متاحة حاليا</div>';
 }
 
 // 2. TOP EDITED (today, aggregated from recent changes)
