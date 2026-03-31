@@ -58,6 +58,7 @@ h1 svg{width:24px;height:24px}
 footer{text-align:center;padding:24px;font-size:12px;color:var(--text3);border-top:1px solid var(--border);margin-top:20px;background:var(--surface)}
 footer a{color:var(--text2);text-decoration:none}
 footer a:hover{text-decoration:underline}
+.panel-freshness{font-size:11px;color:var(--text3);font-weight:400}
 </style>
 </head>
 <body>
@@ -81,6 +82,7 @@ footer a:hover{text-decoration:underline}
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title"><span class="icon icon-views">&#x1f441;</span> الأكثر زيارة</div>
+      <span class="panel-freshness" id="viewsFreshness"></span>
     </div>
     <div class="panel-body" id="viewsPanel">
       <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
@@ -91,6 +93,7 @@ footer a:hover{text-decoration:underline}
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title"><span class="icon icon-edits">&#x270F;</span> الأكثر تعديلا</div>
+      <span class="panel-freshness" id="editsFreshness"></span>
     </div>
     <div class="panel-body" id="editsPanel">
       <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
@@ -101,6 +104,7 @@ footer a:hover{text-decoration:underline}
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title"><span class="icon icon-talks">&#x1f4ac;</span> أبرز النقاشات</div>
+      <span class="panel-freshness" id="talksFreshness"></span>
     </div>
     <div class="panel-body" id="talksPanel">
       <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
@@ -151,13 +155,14 @@ async function loadViews() {
     try {
       const d = new Date(); d.setDate(d.getDate() - daysAgo);
       const path = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-      const res = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/ar.wikipedia/all-access/${path}`, { headers: { 'Api-User-Agent': UA } });
+      const res = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/ar.wikipedia/all-access/${path}`);
       if (!res.ok) continue;
       const data = await res.json();
       const articles = (data.items?.[0]?.articles || []).filter(a => isArticle(a.article)).slice(0, LIMIT);
       if (articles.length === 0) continue;
       const items = articles.map(a => ({ title: a.article, views: a.views, meta: `${fmtNum(a.views)} مشاهدة` }));
       renderRows(items, 'viewsPanel', 'badge-views', 'مشاهدة', it => fmtNum(it.views));
+      document.getElementById('viewsFreshness').textContent = `بيانات ${d.toLocaleDateString('ar-DZ', { day: 'numeric', month: 'long' })} (تأخير ~٢٤ ساعة)`;
       document.getElementById('dateInfo').textContent = `بيانات ${d.toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
       return;
     } catch(e) { continue; }
@@ -196,6 +201,7 @@ async function loadEdits() {
       meta: `${count} تعديل &middot; ${editors[title].size} محرر`
     }));
     renderRows(items, 'editsPanel', 'badge-edits', 'تعديل', it => `${it.edits} تعديل`);
+    document.getElementById('editsFreshness').textContent = 'مباشر — آخر تحديث ' + new Date().toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' });
   } catch(e) {
     el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
   }
@@ -238,6 +244,7 @@ async function loadTalks() {
       comment: lastComment[title] || ''
     }));
     renderRows(items, 'talksPanel', 'badge-talks', 'نقاش', it => `${it.edits} مشاركة`);
+    document.getElementById('talksFreshness').textContent = 'مباشر — آخر تحديث ' + new Date().toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' });
   } catch(e) {
     el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
   }
