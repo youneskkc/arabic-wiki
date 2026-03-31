@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ويكيبيديا العربية اليوم</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f5f0;--surface:#fff;--border:#e0ddd5;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --blue:#1a56db;--blue-bg:#eff4ff;--green:#0a7d3a;--green-bg:#e8f5ee;
+  --orange:#c2410c;--orange-bg:#fff7ed;--purple:#7c3aed;--purple-bg:#f5f3ff;
+}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 24px;position:sticky;top:0;z-index:100}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+h1 svg{width:24px;height:24px}
+.date-info{font-size:13px;color:var(--text3)}
+.refresh-btn{border:1px solid var(--border);background:var(--surface);padding:6px 16px;border-radius:8px;font-family:inherit;font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s}
+.refresh-btn:hover{border-color:#bbb;background:#fafafa}
+.refresh-btn:disabled{opacity:.5;cursor:wait}
+.grid{max-width:1100px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+@media(min-width:901px) and (max-width:1200px){.grid{grid-template-columns:1fr 1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-title .icon{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.icon-views{background:var(--blue-bg);color:var(--blue)}
+.icon-edits{background:var(--green-bg);color:var(--green)}
+.icon-talks{background:var(--orange-bg);color:var(--orange)}
+.panel-body{padding:0;max-height:70vh;overflow-y:auto}
+.panel-body::-webkit-scrollbar{width:4px}
+.panel-body::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+.row{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f0ede6;gap:12px;transition:background .1s}
+.row:hover{background:#fafaf6}
+.row:last-child{border-bottom:none}
+.rank{width:22px;height:22px;border-radius:6px;background:#f0ede6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2);flex-shrink:0}
+.rank.top3{background:var(--blue-bg);color:var(--blue)}
+.row-content{flex:1;min-width:0}
+.row-title{font-size:13px;font-weight:500;line-height:1.5}
+.row-title a{color:var(--text);text-decoration:none}
+.row-title a:hover{text-decoration:underline;color:var(--blue)}
+.row-meta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.row-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;flex-shrink:0}
+.badge-views{background:var(--blue-bg);color:var(--blue)}
+.badge-edits{background:var(--green-bg);color:var(--green)}
+.badge-talks{background:var(--orange-bg);color:var(--orange)}
+.loading{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.loading-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);margin:0 2px;animation:blink 1.2s infinite}
+.loading-dot:nth-child(2){animation-delay:.2s}
+.loading-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.error-msg{text-align:center;padding:30px 20px;color:var(--orange);font-size:13px}
+.comment-text{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;max-height:36px;overflow:hidden}
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      ويكيبيديا العربية اليوم
+    </h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="date-info" id="dateInfo"></span>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">تحديث</button>
+    </div>
+  </div>
+</header>
+
+<!-- GRID -->
+<div class="grid">
+  <!-- TOP VIEWED -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="icon icon-views">&#x1f441;</span> الأكثر زيارة</div>
+    </div>
+    <div class="panel-body" id="viewsPanel">
+      <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+    </div>
+  </div>
+
+  <!-- TOP EDITED -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="icon icon-edits">&#x270F;</span> الأكثر تعديلا</div>
+    </div>
+    <div class="panel-body" id="editsPanel">
+      <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+    </div>
+  </div>
+
+  <!-- TOP DISCUSSIONS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="icon icon-talks">&#x1f4ac;</span> أبرز النقاشات</div>
+    </div>
+    <div class="panel-body" id="talksPanel">
+      <div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+    </div>
+  </div>
+</div>
+<script>
+const UA = 'ArabicWikiTracker/1.0 (https://github.com/youneskkc/arabic-wiki)';
+const LIMIT = 25;
+
+// Filter out special/file/meta pages
+function isArticle(title) {
+  const skip = ['خاص:', 'ملف:', 'تصنيف:', 'قالب:', 'وحدة:', 'مساعدة:', 'ويكيبيديا:', 'Special:', 'File:', 'Category:', 'الصفحة_الرئيسة', 'الصفحة_الرئيسية'];
+  return !skip.some(s => title.startsWith(s) || title === s);
+}
+
+function cleanTitle(t) { return t.replace(/_/g, ' '); }
+function wikiLink(t) { return 'https://ar.wikipedia.org/wiki/' + encodeURIComponent(t); }
+function fmtNum(n) { return n.toLocaleString('ar-EG'); }
+
+function renderRows(items, panel, badgeClass, badgeLabel, badgeFn) {
+  const el = document.getElementById(panel);
+  if (!items.length) { el.innerHTML = '<div class="error-msg">لا توجد بيانات</div>'; return; }
+  el.innerHTML = items.map((item, i) => `
+    <div class="row">
+      <div class="rank ${i < 3 ? 'top3' : ''}">${i + 1}</div>
+      <div class="row-content">
+        <div class="row-title"><a href="${wikiLink(item.title)}" target="_blank" rel="noopener">${cleanTitle(item.title)}</a></div>
+        ${item.meta ? `<div class="row-meta">${item.meta}</div>` : ''}
+        ${item.comment ? `<div class="comment-text">${item.comment}</div>` : ''}
+      </div>
+      <div class="row-badge ${badgeClass}">${badgeFn(item)}</div>
+    </div>
+  `).join('');
+}
+
+// 1. TOP VIEWED (yesterday - today's data not available until next day)
+async function loadViews() {
+  const el = document.getElementById('viewsPanel');
+  el.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
+  try {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    const path = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    const res = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/ar.wikipedia/all-access/${path}`, { headers: { 'Api-User-Agent': UA } });
+    const data = await res.json();
+    const articles = (data.items?.[0]?.articles || []).filter(a => isArticle(a.article)).slice(0, LIMIT);
+    const items = articles.map(a => ({ title: a.article, views: a.views, meta: `${fmtNum(a.views)} مشاهدة` }));
+    renderRows(items, 'viewsPanel', 'badge-views', 'مشاهدة', it => fmtNum(it.views));
+    document.getElementById('dateInfo').textContent = `بيانات ${d.toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+  } catch(e) {
+    el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
+  }
+}
+
+// 2. TOP EDITED (today, aggregated from recent changes)
+async function loadEdits() {
+  const el = document.getElementById('editsPanel');
+  el.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
+  try {
+    // Fetch multiple batches to get more data
+    let allChanges = [];
+    let continueToken = '';
+    for (let i = 0; i < 4; i++) {
+      const contParam = continueToken ? `&rccontinue=${continueToken}` : '';
+      const url = `https://ar.wikipedia.org/w/api.php?action=query&list=recentchanges&rcnamespace=0&rclimit=500&rctype=edit&rcprop=title|timestamp|user|sizes&format=json&origin=*${contParam}`;
+      const res = await fetch(url, { headers: { 'Api-User-Agent': UA } });
+      const data = await res.json();
+      allChanges = allChanges.concat(data.query.recentchanges);
+      if (data.continue?.rccontinue) { continueToken = data.continue.rccontinue; } else break;
+    }
+    // Count edits per article
+    const counter = {};
+    const editors = {};
+    for (const c of allChanges) {
+      if (!isArticle(c.title)) continue;
+      counter[c.title] = (counter[c.title] || 0) + 1;
+      if (!editors[c.title]) editors[c.title] = new Set();
+      editors[c.title].add(c.user);
+    }
+    const sorted = Object.entries(counter).sort((a, b) => b[1] - a[1]).slice(0, LIMIT);
+    const items = sorted.map(([title, count]) => ({
+      title, edits: count,
+      meta: `${count} تعديل &middot; ${editors[title].size} محرر`
+    }));
+    renderRows(items, 'editsPanel', 'badge-edits', 'تعديل', it => `${it.edits} تعديل`);
+  } catch(e) {
+    el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
+  }
+}
+
+// 3. TOP DISCUSSIONS (talk pages + wikipedia namespace)
+async function loadTalks() {
+  const el = document.getElementById('talksPanel');
+  el.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
+  try {
+    let allChanges = [];
+    let continueToken = '';
+    // namespace 1=Talk, 4=Wikipedia, 5=Wikipedia talk
+    for (let i = 0; i < 3; i++) {
+      const contParam = continueToken ? `&rccontinue=${continueToken}` : '';
+      const url = `https://ar.wikipedia.org/w/api.php?action=query&list=recentchanges&rcnamespace=1|4|5&rclimit=500&rctype=edit|new&rcprop=title|timestamp|user|comment&format=json&origin=*${contParam}`;
+      const res = await fetch(url, { headers: { 'Api-User-Agent': UA } });
+      const data = await res.json();
+      allChanges = allChanges.concat(data.query.recentchanges);
+      if (data.continue?.rccontinue) { continueToken = data.continue.rccontinue; } else break;
+    }
+    // Count activity per talk page, collect comments
+    const counter = {};
+    const participants = {};
+    const lastComment = {};
+    for (const c of allChanges) {
+      const t = c.title;
+      counter[t] = (counter[t] || 0) + 1;
+      if (!participants[t]) participants[t] = new Set();
+      participants[t].add(c.user);
+      if (c.comment && (!lastComment[t] || c.comment.length > lastComment[t].length)) {
+        lastComment[t] = c.comment.replace(/\/\*.*?\*\//g, '').trim();
+      }
+    }
+    const sorted = Object.entries(counter).sort((a, b) => b[1] - a[1]).slice(0, LIMIT);
+    // Clean up talk page titles: "نقاش:X" -> link to discussion
+    const items = sorted.map(([title, count]) => ({
+      title, edits: count,
+      meta: `${count} مشاركة &middot; ${participants[title].size} مشارك`,
+      comment: lastComment[title] || ''
+    }));
+    renderRows(items, 'talksPanel', 'badge-talks', 'نقاش', it => `${it.edits} مشاركة`);
+  } catch(e) {
+    el.innerHTML = `<div class="error-msg">خطأ في تحميل البيانات</div>`;
+  }
+}
+
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = 'جاري التحديث...';
+  await Promise.all([loadViews(), loadEdits(), loadTalks()]);
+  btn.disabled = false; btn.textContent = 'تحديث';
+}
+
+loadAll();
+// Auto-refresh every 5 minutes
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>
